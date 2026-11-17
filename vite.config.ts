@@ -61,7 +61,9 @@ export default defineConfig(({ mode }) => ({
         start_url: '.',
         scope: '.',
         theme_color: '#0b5f7c',
-        background_color: '#ffffff',
+        // Same as theme_color: Chrome on Android tints the system nav buttons of the installed app from
+        // background_color, so white here gave dark-grey buttons on the petrol bar. Also the splash colour.
+        background_color: '#0b5f7c',
         icons: [
           { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
