@@ -1,0 +1,5 @@
+docs
+.superpowers
+dist
+coverage
+package-lock.json

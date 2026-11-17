@@ -1,0 +1,63 @@
+/* Colour layer for the petrol theme (decision D9). Visual only. */
+:root {
+  --bogen-red: #b23a31;
+}
+:root[data-mantine-color-scheme='dark'] {
+  --bogen-red: #f08a80;
+}
+body {
+  background-color: light-dark(#f1f3f5, var(--mantine-color-dark-8));
+}
+
+/* Required-field asterisk uses the red accent. */
+:root {
+  --input-asterisk-color: var(--bogen-red);
+}
+
+.bogen-header {
+  background-color: light-dark(#0b5f7c, #094f68);
+  border-bottom-color: transparent;
+  color: #fff;
+}
+
+.bogen-navbar {
+  background-color: light-dark(#e7f2f6, #1a2428);
+  border-right-color: light-dark(#cfe4ec, #2c2e33);
+}
+.bogen-nav-link[data-active] {
+  background-color: light-dark(#0b5f7c, rgba(46, 150, 186, 0.25));
+  color: light-dark(#fff, #a6d7e8);
+  font-weight: 600;
+}
+.bogen-nav-link[data-active]:hover {
+  background-color: light-dark(#094f68, rgba(46, 150, 186, 0.35));
+}
+
+/* Mantine 8 button weight (Mantine 9 uses the medium weight, which the theme keeps at 500). */
+.bogen-button {
+  font-weight: 600;
+}
+
+/* Mantine 8 cursor for checkbox, radio and switch (the theme cursorType is 'pointer'). */
+.bogen-cursor-default {
+  --mantine-cursor-type: default;
+}
+
+/* Mantine 8 segmented control: indicator and labels share the outer radius (Mantine 9 subtracts
+   4px, which leaves square corners at the theme's sm radius). */
+.bogen-sc-radius,
+.bogen-sc-radius::before {
+  border-radius: var(--sc-radius, var(--mantine-radius-default));
+}
+
+.bogen-card {
+  background-color: light-dark(#fff, #25262b);
+  box-shadow: light-dark(0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.4));
+}
+/* Petrol accent for the list cards (my forms, my entries, library) and the builder field cards. */
+.bogen-list-card {
+  border-left: 4px solid light-dark(#0f6e8f, #2e96ba);
+}
+.bogen-card h3 {
+  color: light-dark(#094f68, #e9ecef);
+}

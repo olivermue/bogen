@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#0b5f7c"/>
+  <g transform="translate(110 143) scale(0.688)">
+    <rect width="512" height="512" rx="96" fill="#ffffff"/>
+    <rect x="136" y="88" width="240" height="336" rx="28" fill="#0b5f7c"/>
+    <rect x="172" y="132" width="120" height="20" rx="10" fill="#a6d7e8"/>
+    <rect x="172" y="184" width="168" height="16" rx="8" fill="#7cc3dc"/>
+    <rect x="172" y="224" width="168" height="16" rx="8" fill="#7cc3dc"/>
+    <path d="M182 332 L226 376 L330 276" fill="none" stroke="#ffffff" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="514" y="290" font-family="system-ui, 'Segoe UI', Arial, sans-serif" font-size="150" font-weight="700" fill="#ffffff">BOGEN</text>
+  <text x="524" y="352" font-family="system-ui, 'Segoe UI', Arial, sans-serif" font-size="31" fill="#e7f2f6"><tspan font-weight="700" fill="#ffd479">B</tspan>aukasten für <tspan font-weight="700" fill="#ffd479">O</tspan>ffline-Formulare:</text>
+  <text x="524" y="394" font-family="system-ui, 'Segoe UI', Arial, sans-serif" font-size="31" fill="#e7f2f6"><tspan font-weight="700" fill="#ffd479">G</tspan>estalten, <tspan font-weight="700" fill="#ffd479">E</tspan>intragen, <tspan font-weight="700" fill="#ffd479">N</tspan>achrichten teilen</text>
+  <text x="524" y="454" font-family="system-ui, 'Segoe UI', Arial, sans-serif" font-size="31" fill="#e7f2f6">Build, fill and share forms – offline</text>
+</svg>

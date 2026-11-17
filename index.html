@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BOGEN</title>
+    <meta
+      name="description"
+      content="Baukasten für Offline-Formulare: Gestalten, Eintragen, Nachrichten teilen"
+    />
+    <meta name="theme-color" content="#0b5f7c" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/logo-small.svg" sizes="any" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <meta property="og:title" content="BOGEN" />
+    <meta
+      property="og:description"
+      content="Baukasten für Offline-Formulare: Gestalten, Eintragen, Nachrichten teilen"
+    />
+    <meta property="og:image" content="%VITE_SITE_URL%og-image.png" />
+    <meta property="og:url" content="%VITE_SITE_URL%" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <!-- Shown until React renders (or the boot error replaces it); bilingual like the boot error. -->
+    <div id="root">
+      <p
+        class="boot-loading"
+        style="
+          margin: 3rem 1rem;
+          font-family: system-ui, sans-serif;
+          color: #5c5f66;
+          text-align: center;
+        "
+      >
+        BOGEN wird geladen … / BOGEN is loading …
+      </p>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

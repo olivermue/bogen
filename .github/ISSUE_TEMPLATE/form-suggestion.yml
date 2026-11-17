@@ -1,0 +1,24 @@
+name: Formular vorschlagen / Suggest a form
+description: Schlage ein neues Formular für die Bibliothek vor. / Suggest a new form for the library.
+title: 'Formularvorschlag: '
+labels: ['form-suggestion']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für deinen Vorschlag! Bitte hänge das Formular als `.json`-Datei an (Export aus dem Formular-Generator).
+        Thank you for your suggestion! Please attach the form as a `.json` file (exported from the form builder).
+  - type: textarea
+    id: description
+    attributes:
+      label: Beschreibung / Description
+      description: Wofür ist das Formular gedacht? / What is the form for?
+    validations:
+      required: true
+  - type: textarea
+    id: attachment
+    attributes:
+      label: Formular-Datei (.json) / Form file (.json)
+      description: Ziehe die `.json`-Datei in dieses Feld, GitHub fügt dann einen Link ein. / Drag the `.json` file into this field; GitHub inserts a link.
+    validations:
+      required: true

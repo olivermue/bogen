@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "forms": [
+    {
+      "id": "6f0c2a1e-5b7d-4c1a-9a53-0d2f4e8b1a01",
+      "title": "Krankmeldung",
+      "description": "Kurze Meldung bei Krankheit an den Arbeitgeber oder die Schule.",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z",
+      "fields": [
+        {
+          "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7b02",
+          "type": "heading",
+          "required": false,
+          "options": { "text": "Angaben zur Person" }
+        },
+        {
+          "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7b03",
+          "type": "textLine",
+          "label": "Name",
+          "required": true,
+          "options": { "placeholder": "Vor- und Nachname", "maxLength": 100 }
+        },
+        {
+          "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7b04",
+          "type": "date",
+          "label": "Krank ab",
+          "required": true,
+          "help": "Wochenenden sind nicht auswählbar.",
+          "options": {
+            "min": { "kind": "relative", "days": -14 },
+            "max": { "kind": "relative", "days": 0 },
+            "disabledWeekdays": [0, 6],
+            "defaultToday": true
+          }
+        },
+        {
+          "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7b05",
+          "type": "number",
+          "label": "Voraussichtliche Dauer",
+          "required": false,
+          "options": { "min": 1, "max": 60, "step": 1, "unit": "Tage" }
+        },
+        {
+          "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7b06",
+          "type": "yesNo",
+          "label": "Ärztliche Bescheinigung liegt vor",
+          "required": true,
+          "options": { "yesLabel": "Ja", "noLabel": "Nein" }
+        },
+        {
+          "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7b07",
+          "type": "singleChoice",
+          "label": "Art der Erkrankung",
+          "required": false,
+          "options": {
+            "display": "radio",
+            "choices": [
+              { "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7c01", "label": "Erkältung" },
+              { "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7c02", "label": "Magen-Darm" },
+              { "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7c03", "label": "Sonstiges" }
+            ]
+          }
+        },
+        {
+          "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7b08",
+          "type": "multipleChoice",
+          "label": "Symptome",
+          "required": false,
+          "options": {
+            "choices": [
+              { "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7d01", "label": "Fieber" },
+              { "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7d02", "label": "Husten" },
+              { "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7d03", "label": "Kopfschmerzen" }
+            ]
+          }
+        },
+        {
+          "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7b09",
+          "type": "time",
+          "label": "Uhrzeit der Meldung",
+          "required": false,
+          "options": { "stepMinutes": 5 }
+        },
+        {
+          "id": "b1a7c3d0-2e4f-4a66-8c11-1f0e9d8c7b10",
+          "type": "textArea",
+          "label": "Anmerkungen",
+          "required": false,
+          "options": { "rows": 4 }
+        }
+      ]
+    }
+  ]
+}
