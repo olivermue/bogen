@@ -15,7 +15,7 @@ import { useT } from '../../i18n/I18nProvider';
 
 const LANGUAGES: LanguageSetting[] = ['auto', 'de', 'en'];
 const DELETE_VALUES: DeleteAfterShare[] = ['never', 'immediately', '1d', '7d', '30d'];
-const COPY_FORMATS: CopyFormat[] = ['text', 'markdown', 'html'];
+const COPY_FORMATS: CopyFormat[] = ['text', 'markdown', 'html', 'whatsapp'];
 const SCHEMES: Settings['colorScheme'][] = ['auto', 'light', 'dark'];
 
 export function SettingsPage() {

@@ -119,16 +119,36 @@ interface Style {
    * whether the text starts a line of the output.
    */
   text: (s: string, lineStart: boolean) => string;
+  /**
+   * Line break between two text lines of one block. Markdown needs a hard break ("\" at the
+   * end of the line); a plain "\n" would join the lines into one when rendered.
+   */
+  lineBreak: string;
+  /**
+   * Markdown: text right after a list line continues the last list item ("lazy continuation"),
+   * so a list followed by an unlabeled text block still needs a blank line.
+   */
+  blankAfterList: boolean;
 }
 
 const PLAIN_STYLES: Record<Exclude<OutputFormat, 'html'>, Style> = {
-  text: { title: (s) => s, heading: (s) => s, label: (s) => s, bullet: '- ', text: (s) => s },
+  text: {
+    title: (s) => s,
+    heading: (s) => s,
+    label: (s) => s,
+    bullet: '- ',
+    text: (s) => s,
+    lineBreak: '\n',
+    blankAfterList: false,
+  },
   markdown: {
     title: (s) => `# ${escapeClosingHashes(s)}`,
     heading: (s) => `## ${escapeClosingHashes(s)}`,
     label: (s) => `**${s}**`,
     bullet: '- ',
     text: escapeMarkdown,
+    lineBreak: '\\\n',
+    blankAfterList: true,
   },
   // WhatsApp: *bold* for title, section headings and questions; bullets are "- ". WhatsApp has
   // no escaping, so user text stays as it is; it is trimmed (toBlocks/formatEntry) because
@@ -139,37 +159,87 @@ const PLAIN_STYLES: Record<Exclude<OutputFormat, 'html'>, Style> = {
     label: (s) => `*${s}*`,
     bullet: '- ',
     text: (s) => s,
+    lineBreak: '\n',
+    blankAfterList: false,
   },
 };
 
-function renderPlain(title: string, blocks: Block[], style: Style): string {
-  const { text } = style;
-  // Labels follow "**" on their line; title, headings and list items are escaped like line starts.
-  const parts: string[] = [style.title(text(title, true))];
-  for (const b of blocks) {
-    if (b.kind === 'heading') {
-      parts.push(style.heading(text(b.text, true)));
-      continue;
-    }
-    const label = b.label ? style.label(text(b.label, false)) : undefined;
-    if (Array.isArray(b.answer)) {
-      const list = b.answer.map((a) => `${style.bullet}${text(a, true)}`).join('\n');
-      parts.push(label ? `${label}\n${list}` : list);
-    } else if (!label) {
-      parts.push(text(b.answer, true));
-    } else if (b.answer.includes('\n')) {
-      parts.push(`${label}\n${text(b.answer, true)}`);
-    } else {
-      parts.push(`${label}: ${text(b.answer, false)}`);
-    }
+/**
+ * Joins text lines with `lineBreak`; around an empty line (a paragraph break inside a
+ * multi-line answer) a plain "\n" is used, so no stray "\" lines appear in Markdown.
+ */
+function joinLines(lines: string[], lineBreak: string): string {
+  let out = lines[0] ?? '';
+  for (let i = 1; i < lines.length; i++) {
+    const hard = lines[i - 1] !== '' && lines[i] !== '';
+    out += (hard ? lineBreak : '\n') + lines[i];
   }
-  return parts.join('\n\n');
+  return out;
 }
 
+/** One rendered block plus what the separator to its neighbours depends on. */
+interface Part {
+  body: string;
+  /** An answer without label: it joins a directly preceding one without a blank line. */
+  unlabeled: boolean;
+  isList: boolean;
+}
+
+/**
+ * Layout: title, then the blocks, separated by a blank line. A block with a label puts the label
+ * on its own line and the answer (one line per value) right below. Only between two blocks
+ * without label there is no blank line: they follow each other line by line.
+ */
+function renderPlain(title: string, blocks: Block[], style: Style): string {
+  const { text, lineBreak } = style;
+  const lines = (s: string): string => joinLines(text(s, true).split(/\r?\n/), lineBreak);
+  // Labels follow "**" on their line; title, headings, answers and list items are escaped like
+  // line starts.
+  const parts: Part[] = [{ body: style.title(text(title, true)), unlabeled: false, isList: false }];
+  for (const b of blocks) {
+    if (b.kind === 'heading') {
+      parts.push({ body: style.heading(text(b.text, true)), unlabeled: false, isList: false });
+      continue;
+    }
+    const isList = Array.isArray(b.answer);
+    const answer = Array.isArray(b.answer)
+      ? b.answer.map((a) => `${style.bullet}${text(a, true)}`).join('\n')
+      : lines(b.answer);
+    if (!b.label) {
+      parts.push({ body: answer, unlabeled: true, isList });
+      continue;
+    }
+    // A list starts its own Markdown block, so no hard break before it.
+    const label = style.label(text(b.label, false));
+    parts.push({ body: label + (isList ? '\n' : lineBreak) + answer, unlabeled: false, isList });
+  }
+
+  let out = '';
+  parts.forEach((cur, i) => {
+    const prev = parts[i - 1];
+    if (prev) {
+      let sep = '\n\n';
+      if (prev.unlabeled && cur.unlabeled) {
+        if (prev.isList && !cur.isList && style.blankAfterList) sep = '\n\n';
+        else if (prev.isList || cur.isList) sep = '\n';
+        else sep = lineBreak;
+      }
+      out += sep;
+    }
+    out += cur.body;
+  });
+  return out;
+}
+
+/** Same grouping as `renderPlain`: consecutive unlabeled text answers share one paragraph. */
 function renderHtml(title: string, blocks: Block[]): string {
   const multiline = (s: string): string => escapeHtml(s).replace(/\r?\n/g, '<br>');
   const parts: string[] = [`<h1>${escapeHtml(title)}</h1>`];
+  // Index in `parts` of the paragraph an unlabeled text answer may join, or -1.
+  let openParagraph = -1;
   for (const b of blocks) {
+    const joinable = openParagraph;
+    openParagraph = -1;
     if (b.kind === 'heading') {
       parts.push(`<h2>${escapeHtml(b.text)}</h2>`);
       continue;
@@ -178,9 +248,17 @@ function renderHtml(title: string, blocks: Block[]): string {
     if (Array.isArray(b.answer)) {
       const ul = `<ul>${b.answer.map((a) => `<li>${escapeHtml(a)}</li>`).join('')}</ul>`;
       parts.push(label ? `<p>${label}</p>\n${ul}` : ul);
+      continue;
+    }
+    const answer = multiline(b.answer);
+    if (label) {
+      parts.push(`<p>${label}<br>${answer}</p>`);
+    } else if (joinable >= 0) {
+      parts[joinable] = parts[joinable]!.replace(/<\/p>$/, `<br>${answer}</p>`);
+      openParagraph = joinable;
     } else {
-      const answer = multiline(b.answer);
-      parts.push(label ? `<p>${label}<br>${answer}</p>` : `<p>${answer}</p>`);
+      parts.push(`<p>${answer}</p>`);
+      openParagraph = parts.length - 1;
     }
   }
   return parts.join('\n');

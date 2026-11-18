@@ -13,6 +13,7 @@ import { fieldDomId } from './fields/types';
 import { OutputActions } from './OutputActions';
 import { prefillAnswers } from './prefill';
 import { useAutosave } from './useAutosave';
+import { useDelayedFlag } from './useDelayedFlag';
 
 function focusField(fieldId: string) {
   const el = document.getElementById(fieldDomId(fieldId));
@@ -65,11 +66,15 @@ function FillForm(props: { entry: Entry }) {
   );
   const [answers, setAnswers] = useState<Answers>(prefilled ?? entry.answers);
   const [errors, setErrors] = useState<ReadonlyMap<string, string>>(new Map());
-  // While copy/share runs the fields are locked: an edit made then could be lost when the
-  // entry is deleted right after ('immediately').
+  // While copy/share runs (or the page is being left) the fields are locked: an edit made then
+  // could be lost when the entry is deleted right after ('immediately'). The lock takes effect
+  // at once (`lockedRef`, edits are ignored); the fields only look disabled once it lasts a
+  // moment (`showLocked`), so a quick copy does not make the whole form flicker.
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const leavingRef = useRef(false);
+  const busyRef = useRef(false);
+  const showLocked = useDelayedFlag(busy || leaving);
   const navigate = useNavigate();
   const { key: locationKey } = useLocation();
   const t = useT();
@@ -137,6 +142,7 @@ function FillForm(props: { entry: Entry }) {
   }, [entry, prefilled]);
 
   const change = (fieldId: string, value: AnswerValue) => {
+    if (busyRef.current || leavingRef.current) return;
     setAnswers((prev) => ({ ...prev, [fieldId]: value }));
     setErrors((prev) => {
       if (!prev.has(fieldId)) return prev;
@@ -152,7 +158,7 @@ function FillForm(props: { entry: Entry }) {
         variant="subtle"
         w="fit-content"
         ml="calc(var(--mantine-spacing-xs) * -1)"
-        disabled={busy || leaving}
+        disabled={showLocked}
         leftSection={<span aria-hidden>{'‹'}</span>}
         onClick={() => void back()}
       >
@@ -171,7 +177,7 @@ function FillForm(props: { entry: Entry }) {
         answers={answers}
         errors={errors}
         onChange={change}
-        disabled={busy || leaving}
+        disabled={showLocked}
       />
       <Divider />
       <OutputActions
@@ -179,7 +185,10 @@ function FillForm(props: { entry: Entry }) {
         form={form}
         answers={answers}
         flush={flush}
-        onBusyChange={setBusy}
+        onBusyChange={(next) => {
+          busyRef.current = next;
+          setBusy(next);
+        }}
         onInvalid={(next) => {
           setErrors(next);
           const first = next.keys().next().value;

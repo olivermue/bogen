@@ -115,9 +115,10 @@ test('main flow: build, reorder, fill, copy, export/import, language', async ({ 
   await page.getByText('Markdown', { exact: true }).click();
   await page.getByRole('button', { name: 'Kopieren' }).click();
   await expect(page.getByText('In die Zwischenablage kopiert.')).toBeVisible();
-  const clip = await page.evaluate(() => navigator.clipboard.readText());
+  // The Windows clipboard hands back CRLF line endings.
+  const clip = (await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, '\n');
   expect(clip).toContain('# Test');
-  expect(clip).toContain('**Name**: Erika');
+  expect(clip).toContain('**Name**\\\nErika');
   expect(clip).toMatch(/^- Option 2$/m);
   expect(clip).not.toContain('Option 1');
 

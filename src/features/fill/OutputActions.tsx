@@ -1,21 +1,24 @@
 import { Button, Group, SegmentedControl, Skeleton, Stack, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { getEntry } from '../../db/entries';
-import { getSettings, useSettings, type CopyFormat } from '../../db/settings';
+import { DEFAULT_SETTINGS, getSettings, useSettings, type CopyFormat } from '../../db/settings';
 import { formatEntry } from '../../domain/output';
 import { useLanguage, useT } from '../../i18n/I18nProvider';
 import type { Answers, Form } from '../../schema/form';
 import { afterSuccessfulShare } from '../../services/afterShare';
 import { copyToClipboard } from '../../services/clipboard';
 import { shareText } from '../../services/share';
+import { useDelayedFlag } from './useDelayedFlag';
 import { validateAnswers } from './validateAnswers';
 
-const FORMATS: CopyFormat[] = ['text', 'markdown', 'html'];
+const FORMATS: CopyFormat[] = ['text', 'markdown', 'html', 'whatsapp'];
 
 /**
- * Format choice, "Copy" and "Share" for one entry.
+ * Format choice, "Copy" and "Share" for one entry. Both actions use the chosen format; for
+ * HTML, sharing sends the plain-text version (the Web Share API and wa.me take text only),
+ * the same text that copying puts next to the HTML.
  *
  * Order per action: validate -> issue the pending autosave write (`flush()`, synchronous
  * start) -> copy/share right away (still inside the user gesture, which Safari requires for
@@ -39,10 +42,13 @@ export function OutputActions(props: {
   const settings = useSettings();
   const [chosenFormat, setChosenFormat] = useState<CopyFormat | null>(null);
   const [busy, setBusy] = useState(false);
+  // Guards against a second click at once; the spinner only appears if the action lasts.
+  const busyRef = useRef(false);
+  const showBusy = useDelayedFlag(busy);
   // Undefined until the settings are loaded: the choice is not shown before that, so "Text" is
   // never briefly selected in place of the stored default.
   const shownFormat = chosenFormat ?? settings?.copyFormat;
-  const format = shownFormat ?? 'text';
+  const format = shownFormat ?? DEFAULT_SETTINGS.copyFormat;
 
   const run = async (action: 'copy' | 'share') => {
     const errors = validateAnswers(form, answers, t);
@@ -51,19 +57,21 @@ export function OutputActions(props: {
       notifications.show({ color: 'red', message: t('fill.missing') });
       return;
     }
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     onBusyChange?.(true);
     try {
       const saved = flush();
       const labels = { yes: t('fill.yes'), no: t('fill.no') };
+      const text = formatEntry(form, answers, format === 'html' ? 'text' : format, lang, labels);
       let result: 'copied' | 'shared' | 'cancelled' | 'fallback' | 'failed';
       if (action === 'copy') {
-        const text = formatEntry(form, answers, format === 'html' ? 'text' : format, lang, labels);
         const html =
           format === 'html' ? formatEntry(form, answers, 'html', lang, labels) : undefined;
         result = await copyToClipboard({ text, html });
       } else {
-        result = await shareText(formatEntry(form, answers, 'whatsapp', lang, labels));
+        result = await shareText(text);
       }
       if (result === 'cancelled') return;
       if (result === 'failed') {
@@ -99,6 +107,7 @@ export function OutputActions(props: {
       console.error('Copy/share failed', error);
       notifications.show({ color: 'red', message: t('fill.saveFailed') });
     } finally {
+      busyRef.current = false;
       setBusy(false);
       onBusyChange?.(false);
     }
@@ -147,10 +156,10 @@ export function OutputActions(props: {
         <Skeleton height={36} radius="sm" data-testid="fill-format-loading" />
       )}
       <Group grow>
-        <Button variant="default" loading={busy} onClick={() => void run('copy')}>
+        <Button variant="default" loading={showBusy} onClick={() => void run('copy')}>
           {t('fill.copy')}
         </Button>
-        <Button loading={busy} onClick={() => void run('share')}>
+        <Button loading={showBusy} onClick={() => void run('share')}>
           {t('fill.share')}
         </Button>
       </Group>

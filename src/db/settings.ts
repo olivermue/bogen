@@ -3,7 +3,8 @@ import type { LanguageSetting } from '../i18n/detect';
 import { db } from './db';
 
 export type DeleteAfterShare = 'never' | 'immediately' | '1d' | '7d' | '30d';
-export type CopyFormat = 'text' | 'markdown' | 'html';
+/** Output format for both "Copy" and "Share". */
+export type CopyFormat = 'text' | 'markdown' | 'html' | 'whatsapp';
 export type Settings = {
   deleteAfterShare: DeleteAfterShare;
   language: LanguageSetting;
@@ -15,7 +16,7 @@ export type Settings = {
 export const DEFAULT_SETTINGS: Settings = {
   deleteAfterShare: 'never',
   language: 'auto',
-  copyFormat: 'text',
+  copyFormat: 'whatsapp',
   colorScheme: 'auto',
   navbarDesktopOpen: true,
 };

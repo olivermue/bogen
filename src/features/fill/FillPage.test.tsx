@@ -177,8 +177,8 @@ describe('FillPage', () => {
     expect(screen.getByRole('radio', { name: 'Blau' })).toBeChecked();
     await userEvent.click(screen.getByRole('button', { name: 'Kopieren' }));
     await waitFor(() => expect(writeText).toHaveBeenCalled());
-    expect(writeText.mock.calls[0]?.[0]).toContain('Farbe: Blau');
-    expect(writeText.mock.calls[0]?.[0]).toContain('Notiz: Alte Notiz');
+    expect(writeText.mock.calls[0]?.[0]).toContain('*Farbe*\nBlau');
+    expect(writeText.mock.calls[0]?.[0]).toContain('*Notiz*\nAlte Notiz');
   });
 
   it('blocks copy when required fields are missing and marks them', async () => {
@@ -306,7 +306,7 @@ describe('FillPage', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'Kopieren' }));
     await waitFor(() => expect(writeText).toHaveBeenCalled());
-    expect(writeText.mock.calls[0]?.[0]).toContain('Datum: 01.11.2026');
+    expect(writeText.mock.calls[0]?.[0]).toContain('*Datum*\n01.11.2026');
   });
 
   it('does not prefill today when reopening an existing (shared) entry', async () => {
@@ -352,13 +352,45 @@ describe('FillPage', () => {
     await userEvent.type(await screen.findByLabelText('Name'), 'Anna');
     await userEvent.click(screen.getByRole('button', { name: 'Teilen' }));
     await waitFor(() => expect(share).toHaveBeenCalled());
-    // WhatsApp format for sharing (R3).
-    expect(share.mock.calls[0]?.[0]).toEqual({ text: '*Bogen*\n\n*Name*: Anna' });
+    // Shares the chosen format (default: WhatsApp).
+    expect(share.mock.calls[0]?.[0]).toEqual({ text: '*Bogen*\n\n*Name*\nAnna' });
     const stored = await getEntry(entry.id);
     expect(stored?.sharedAt).toBeNull();
     expect(stored?.answers).toEqual({ name: 'Anna' });
     expect(screen.getByLabelText('Name')).toBeInTheDocument(); // still on the page
     expect(screen.queryByRole('button', { name: 'Rückgängig' })).not.toBeInTheDocument();
+  });
+
+  it('shares in the format chosen on the page', async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    setShare(share);
+    const entry = await seed(form([name]), { name: 'Anna' });
+    renderApp(`/entries/${entry.id}`);
+    await userEvent.click(await screen.findByRole('radio', { name: 'Text' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Teilen' }));
+    await waitFor(() => expect(share).toHaveBeenCalled());
+    expect(share.mock.calls[0]?.[0]).toEqual({ text: 'Bogen\n\nName\nAnna' });
+  });
+
+  it('shares the plain-text version when HTML is chosen', async () => {
+    await saveSettings({ copyFormat: 'html' });
+    const share = vi.fn().mockResolvedValue(undefined);
+    setShare(share);
+    const entry = await seed(form([name]), { name: 'Anna' });
+    renderApp(`/entries/${entry.id}`);
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'HTML' })).toBeChecked());
+    await userEvent.click(screen.getByRole('button', { name: 'Teilen' }));
+    await waitFor(() => expect(share).toHaveBeenCalled());
+    expect(share.mock.calls[0]?.[0]).toEqual({ text: 'Bogen\n\nName\nAnna' });
+  });
+
+  it('copies in the format chosen on the page', async () => {
+    const writeText = stubClipboard();
+    const entry = await seed(form([name]), { name: 'Anna' });
+    renderApp(`/entries/${entry.id}`);
+    await userEvent.click(await screen.findByRole('radio', { name: 'Markdown' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Kopieren' }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith('# Bogen\n\n**Name**\\\nAnna'));
   });
 
   it('failed share shows an error and keeps the entry unshared', async () => {
@@ -381,7 +413,7 @@ describe('FillPage', () => {
     // Click right away: the pending autosave must be flushed before deleting.
     await userEvent.click(screen.getByRole('button', { name: 'Kopieren' }));
     await waitFor(async () => expect(await getEntry(entry.id)).toBeUndefined());
-    expect(writeText).toHaveBeenCalledWith('Bogen\n\nName: Anna');
+    expect(writeText).toHaveBeenCalledWith('*Bogen*\n\n*Name*\nAnna');
     expect(await screen.findByText(/Noch keine Einträge/)).toBeInTheDocument(); // /entries
     await userEvent.click(await screen.findByRole('button', { name: 'Rückgängig' }));
     await waitFor(async () => {
@@ -416,7 +448,7 @@ describe('FillPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Kopieren' }));
     await waitFor(() => expect(write).toHaveBeenCalled());
     const item = write.mock.calls[0]?.[0]?.[0] as FakeClipboardItem;
-    expect(await item.items['text/plain']?.text()).toBe('Bogen\n\nName: Anna');
+    expect(await item.items['text/plain']?.text()).toBe('Bogen\n\nName\nAnna');
     expect(await item.items['text/html']?.text()).toContain('<strong>Name</strong>');
   });
 

@@ -52,7 +52,10 @@ describe('SettingsPage', () => {
 
   it('saves copy format and colour scheme', async () => {
     renderApp('/settings');
-    await userEvent.selectOptions(await screen.findByLabelText('Format beim Kopieren'), 'markdown');
+    await userEvent.selectOptions(
+      await screen.findByLabelText('Format beim Kopieren und Teilen'),
+      'markdown',
+    );
     await userEvent.selectOptions(screen.getByLabelText('Farbschema'), 'dark');
     await waitFor(async () => {
       const s = await getSettings();
