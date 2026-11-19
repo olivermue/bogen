@@ -58,6 +58,17 @@ body {
 .bogen-list-card {
   border-left: 4px solid light-dark(#0f6e8f, #2e96ba);
 }
+/* Label/date pairs on a list card: dates start in one column. */
+.bogen-stamps {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: start;
+  column-gap: 0.35em;
+  margin: 0;
+}
+.bogen-stamps dd {
+  margin: 0;
+}
 .bogen-card h3 {
   color: light-dark(#094f68, #e9ecef);
 }

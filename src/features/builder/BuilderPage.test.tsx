@@ -172,6 +172,16 @@ describe('BuilderPage', () => {
     );
   });
 
+  it('edits a heading with heading text before help text and without a label input', async () => {
+    renderApp('/forms/new');
+    await addField('Überschrift');
+    const card = screen.getByTestId('field-0');
+    expect(within(card).queryByLabelText('Bezeichnung')).not.toBeInTheDocument();
+    const heading = within(card).getByLabelText('Überschrift');
+    const help = within(card).getByLabelText('Hilfetext');
+    expect(heading.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('disables move buttons at the ends', async () => {
     renderApp('/forms/new');
     await addField('Textzeile');
@@ -300,6 +310,21 @@ describe('BuilderPage', () => {
       { display: 'chips' },
       { display: 'chips' },
     ]);
+  });
+
+  it('stores the display of a yes/no field and previews it', async () => {
+    renderApp('/forms/new');
+    await userEvent.type(await screen.findByLabelText(/Titel/), 'Bogen');
+    await addField('Ja/Nein');
+    expect(screen.getByLabelText('Darstellung')).toHaveValue('radio');
+    await userEvent.selectOptions(screen.getByLabelText('Darstellung'), 'Aufklappliste');
+    await userEvent.click(screen.getByRole('switch', { name: 'Vorschau' }));
+    expect(screen.getByRole('combobox')).toBeDisabled();
+    await userEvent.click(screen.getByRole('switch', { name: 'Vorschau' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }));
+    const field = (await savedForm()).fields[0];
+    if (field?.type !== 'yesNo') throw new Error('expected yesNo');
+    expect(field.options.display).toBe('dropdown');
   });
 
   it('does not ask after a successful save', async () => {

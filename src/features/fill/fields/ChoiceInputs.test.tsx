@@ -118,4 +118,39 @@ describe('yes/no', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Nein' }));
     expect(onChange).toHaveBeenLastCalledWith(false);
   });
+
+  const yesNo = (display?: 'radio' | 'dropdown' | 'chips'): Field => ({
+    id: 'y',
+    type: 'yesNo',
+    label: 'Einverstanden',
+    required: false,
+    options: { yesLabel: 'Klar', noLabel: 'Lieber nicht', ...(display && { display }) },
+  });
+
+  it('shows chips as a radiogroup and answers true/false', async () => {
+    const onChange = setup(yesNo('chips'));
+    expect(screen.getByRole('radiogroup', { name: 'Einverstanden' })).toBeInTheDocument();
+    expect(document.querySelectorAll('.mantine-Chip-root')).toHaveLength(2);
+    await userEvent.click(screen.getByRole('radio', { name: 'Klar' }));
+    expect(onChange).toHaveBeenLastCalledWith(true);
+    await userEvent.click(screen.getByRole('radio', { name: 'Lieber nicht' }));
+    expect(onChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('shows a dropdown and answers true/false/null', async () => {
+    const onChange = setup(yesNo('dropdown'));
+    const select = screen.getByRole('combobox', { name: 'Einverstanden' });
+    await userEvent.selectOptions(select, 'Klar');
+    expect(onChange).toHaveBeenLastCalledWith(true);
+    await userEvent.selectOptions(select, 'Lieber nicht');
+    expect(onChange).toHaveBeenLastCalledWith(false);
+    await userEvent.selectOptions(select, 'Bitte wählen');
+    expect(onChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it('shows radios when no display is set (older forms)', () => {
+    setup(yesNo());
+    expect(screen.getAllByRole('radio')).toHaveLength(2);
+    expect(document.querySelectorAll('.mantine-Chip-root')).toHaveLength(0);
+  });
 });

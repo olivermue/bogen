@@ -1,4 +1,5 @@
 import { Chip, Group, NativeSelect, Radio, Stack } from '@mantine/core';
+import type { ReactNode } from 'react';
 import { useId } from 'react';
 import { useT } from '../../../i18n/I18nProvider';
 import type { SingleChoiceField } from '../../../schema/form';
@@ -12,7 +13,11 @@ export function SingleChoiceInput({
   onChange,
   error,
   disabled,
-}: FieldInputProps<SingleChoiceField>) {
+  inline = false,
+}: FieldInputProps<SingleChoiceField> & {
+  /** Radios side by side instead of one per line (yes/no). */
+  inline?: boolean;
+}) {
   const t = useT();
   // Shared `name`: the browser treats the options as one radio group (one tab stop, arrow keys
   // move and select), for radios and for chips alike.
@@ -81,7 +86,7 @@ export function SingleChoiceInput({
       error={error}
       after={clear}
     >
-      <Stack gap="xs" mt="xs">
+      <RadioLayout inline={inline}>
         {choices.map((c) => (
           <Radio
             key={c.id}
@@ -93,7 +98,19 @@ export function SingleChoiceInput({
             disabled={disabled}
           />
         ))}
-      </Stack>
+      </RadioLayout>
     </ChoiceGroup>
+  );
+}
+
+function RadioLayout({ inline, children }: { inline: boolean; children: ReactNode }) {
+  return inline ? (
+    <Group gap="md" mt="xs">
+      {children}
+    </Group>
+  ) : (
+    <Stack gap="xs" mt="xs">
+      {children}
+    </Stack>
   );
 }

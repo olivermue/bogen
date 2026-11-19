@@ -9,8 +9,16 @@ const tEn = (k: keyof typeof en) => en[k];
 
 describe('newField', () => {
   it('uses the UI language for yes/no labels', () => {
-    expect(newField('yesNo', tDe).options).toEqual({ yesLabel: 'Ja', noLabel: 'Nein' });
-    expect(newField('yesNo', tEn).options).toEqual({ yesLabel: 'Yes', noLabel: 'No' });
+    expect(newField('yesNo', tDe).options).toEqual({
+      yesLabel: 'Ja',
+      noLabel: 'Nein',
+      display: 'radio',
+    });
+    expect(newField('yesNo', tEn).options).toEqual({
+      yesLabel: 'Yes',
+      noLabel: 'No',
+      display: 'radio',
+    });
   });
 
   it('creates valid fields of every type with unique ids, not required', () => {

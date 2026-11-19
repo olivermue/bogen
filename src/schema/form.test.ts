@@ -33,6 +33,27 @@ describe('fieldSchema', () => {
     expect(r.success).toBe(true);
   });
 
+  it('drops a label on heading (old files stay loadable)', () => {
+    const r = fieldSchema.safeParse({
+      id: 'h',
+      type: 'heading',
+      label: 'Old label',
+      required: false,
+      options: { text: 'Title' },
+    });
+    expect(r.success).toBe(true);
+    expect(r.data).not.toHaveProperty('label');
+  });
+
+  it('accepts yesNo without display (older files) and rejects an unknown display', () => {
+    const yesNo = { ...base, type: 'yesNo', options: { yesLabel: 'Ja', noLabel: 'Nein' } };
+    expect(fieldSchema.safeParse(yesNo).success).toBe(true);
+    const chips = { ...yesNo, options: { ...yesNo.options, display: 'chips' } };
+    expect(fieldSchema.safeParse(chips).success).toBe(true);
+    const bad = { ...yesNo, options: { ...yesNo.options, display: 'checkbox' } };
+    expect(fieldSchema.safeParse(bad).success).toBe(false);
+  });
+
   it('rejects date.min with an invalid fixed date', () => {
     const r = fieldSchema.safeParse({
       ...base,

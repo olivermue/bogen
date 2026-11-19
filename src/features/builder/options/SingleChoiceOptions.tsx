@@ -1,17 +1,12 @@
-import { NativeSelect, Stack } from '@mantine/core';
-import { useT } from '../../../i18n/I18nProvider';
+import { Stack } from '@mantine/core';
 import type { SingleChoiceField } from '../../../schema/form';
 import { ChoiceList } from './ChoiceList';
-
-function toDisplay(value: string): SingleChoiceField['options']['display'] {
-  return value === 'dropdown' || value === 'chips' ? value : 'radio';
-}
+import { SingleDisplaySelect } from './SingleDisplaySelect';
 
 export function SingleChoiceOptions(props: {
   options: SingleChoiceField['options'];
   onChange: (options: SingleChoiceField['options']) => void;
 }) {
-  const t = useT();
   const { options, onChange } = props;
   return (
     <Stack gap="sm">
@@ -19,20 +14,9 @@ export function SingleChoiceOptions(props: {
         choices={options.choices}
         onChange={(choices) => onChange({ ...options, choices })}
       />
-      <NativeSelect
-        label={t('builder.opt.display')}
+      <SingleDisplaySelect
         value={options.display}
-        data={[
-          { value: 'radio', label: t('builder.opt.display.radio') },
-          { value: 'dropdown', label: t('builder.opt.display.dropdown') },
-          { value: 'chips', label: t('builder.opt.display.chips') },
-        ]}
-        onChange={(e) =>
-          onChange({
-            ...options,
-            display: toDisplay(e.currentTarget.value),
-          })
-        }
+        onChange={(display) => onChange({ ...options, display })}
       />
     </Stack>
   );

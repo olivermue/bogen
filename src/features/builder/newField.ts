@@ -37,7 +37,11 @@ export function newField(type: FieldType, t: Translate): Field {
       return {
         ...base,
         type,
-        options: { yesLabel: t('builder.default.yes'), noLabel: t('builder.default.no') },
+        options: {
+          yesLabel: t('builder.default.yes'),
+          noLabel: t('builder.default.no'),
+          display: 'radio',
+        },
       };
     case 'heading':
       return { ...base, type, options: { text: '' } };

@@ -87,8 +87,14 @@ describe('EntriesPage', () => {
       }),
     );
     renderApp('/entries');
-    expect(await screen.findByText('Zuletzt geändert: 02.01.2026 14:05')).toBeInTheDocument();
-    expect(screen.getByText('Geteilt am 03.01.2026 09:07')).toBeInTheDocument();
+    // Label/date pairs of one description list, so the dates line up in one column.
+    const terms = await screen.findAllByRole('term');
+    expect(terms.map((t) => t.textContent)).toEqual(['Zuletzt geändert:', 'Zuletzt geteilt:']);
+    expect(screen.getAllByRole('definition').map((d) => d.textContent)).toEqual([
+      '02.01.2026 14:05',
+      '03.01.2026 09:07',
+    ]);
+    expect(terms[0]!.parentElement).toBe(terms[1]!.parentElement);
   });
 
   it('opens an entry', async () => {

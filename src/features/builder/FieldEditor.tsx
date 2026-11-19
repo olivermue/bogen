@@ -101,8 +101,7 @@ export function FieldEditor(props: {
   const t = useT();
   const { field, index, count, expanded, errors } = props;
   const summary =
-    field.label?.trim() ||
-    (field.type === 'heading' ? field.options.text.trim() : '') ||
+    (field.type === 'heading' ? field.options.text.trim() : field.label?.trim()) ||
     t('builder.field.untitled');
   const type = t(`builder.fieldType.${field.type}` as MessageKey);
   // Accessible names carry position and label: "Baustein 2 „Name“ nach unten".
@@ -113,7 +112,8 @@ export function FieldEditor(props: {
   return (
     <Card withBorder padding="sm" className="bogen-list-card" data-testid={`field-${index}`}>
       <Group justify="space-between" wrap="nowrap" gap="xs">
-        <Group gap="xs" wrap="nowrap" style={{ minWidth: 0 }}>
+        {/* Title group and title button grow, so the empty space up to the actions toggles too. */}
+        <Group gap="xs" wrap="nowrap" style={{ minWidth: 0, flex: 1 }}>
           {props.handle(name)}
           <Text
             fw={500}
@@ -131,6 +131,9 @@ export function FieldEditor(props: {
               padding: 0,
               cursor: 'pointer',
               color: 'inherit',
+              flex: 1,
+              minWidth: 0,
+              textAlign: 'left',
             }}
           >
             {title}
@@ -179,13 +182,18 @@ export function FieldEditor(props: {
 
       {expanded && (
         <Stack gap="sm" mt="sm">
-          <TextInput
-            label={t('builder.field.label')}
-            value={field.label ?? ''}
-            onChange={(e) =>
-              props.onChange({ ...field, label: toOptionalText(e.currentTarget.value) })
-            }
-          />
+          {/* A heading has no label; its text input comes first, like on the fill page. */}
+          {field.type === 'heading' ? (
+            <FieldOptions field={field} onChange={props.onChange} />
+          ) : (
+            <TextInput
+              label={t('builder.field.label')}
+              value={field.label ?? ''}
+              onChange={(e) =>
+                props.onChange({ ...field, label: toOptionalText(e.currentTarget.value) })
+              }
+            />
+          )}
           <Textarea
             label={t('builder.field.help')}
             autosize
@@ -202,7 +210,7 @@ export function FieldEditor(props: {
               onChange={(e) => props.onChange({ ...field, required: e.currentTarget.checked })}
             />
           )}
-          <FieldOptions field={field} onChange={props.onChange} />
+          {field.type !== 'heading' && <FieldOptions field={field} onChange={props.onChange} />}
         </Stack>
       )}
     </Card>

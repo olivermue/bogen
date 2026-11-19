@@ -103,12 +103,13 @@ const textAreaField = z.object({
   }),
 });
 
+/** How a single answer out of a few is shown: single choice and yes/no. */
+const singleDisplay = z.enum(['radio', 'dropdown', 'chips']);
+
 const singleChoiceField = z.object({
   ...common,
   type: z.literal('singleChoice'),
-  options: z
-    .object({ choices, display: z.enum(['radio', 'dropdown', 'chips']) })
-    .superRefine(uniqueChoiceIds),
+  options: z.object({ choices, display: singleDisplay }).superRefine(uniqueChoiceIds),
 });
 
 const multipleChoiceField = z.object({
@@ -174,11 +175,14 @@ const numberField = z.object({
 const yesNoField = z.object({
   ...common,
   type: z.literal('yesNo'),
-  options: z.object({ yesLabel: shortText, noLabel: shortText }),
+  // display was added later; optional so older files stay valid. Missing means 'radio'.
+  options: z.object({ yesLabel: shortText, noLabel: shortText, display: singleDisplay.optional() }),
 });
 
+// A heading has no label: its text is options.text. A label in older files is dropped on parse.
 const headingField = z.object({
-  ...common,
+  id: common.id,
+  help: common.help,
   type: z.literal('heading'),
   required: z.literal(false),
   options: z.object({ text: longText }),

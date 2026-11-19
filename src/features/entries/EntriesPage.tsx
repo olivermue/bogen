@@ -60,14 +60,16 @@ export function EntriesPage() {
                 <Title order={3} size="h4">
                   {titleOf(entry)}
                 </Title>
-                <Text c="dimmed" size="sm">
-                  {t('entries.updated', { date: stamp(entry.updatedAt) })}
+                <Text component="dl" c="dimmed" size="sm" className="bogen-stamps">
+                  <dt>{t('entries.updated')}</dt>
+                  <dd>{stamp(entry.updatedAt)}</dd>
+                  {entry.sharedAt ? (
+                    <>
+                      <dt>{t('entries.shared')}</dt>
+                      <dd>{stamp(entry.sharedAt)}</dd>
+                    </>
+                  ) : null}
                 </Text>
-                {entry.sharedAt ? (
-                  <Text c="dimmed" size="sm">
-                    {t('entries.shared', { date: stamp(entry.sharedAt) })}
-                  </Text>
-                ) : null}
               </div>
               <Badge color={complete ? 'green' : 'yellow'}>
                 {t(complete ? 'entries.status.complete' : 'entries.status.inProgress')}
