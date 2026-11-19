@@ -40,9 +40,39 @@ export default defineConfig(({ mode }) => ({
     __LIBRARY_BUNDLED__: JSON.stringify(mode === 'test' ? true : LIBRARY_ENABLED),
   },
   build: {
-    // With Mantine 9, Rolldown folds the shared Mantine/app chunk into the entry (~680 kB minified);
+    // The largest first-load chunk is react-dom & co. (~370 kB minified);
     // the real guard is `npm run budget` (gzip, first load, hard limit 512 KB).
-    chunkSizeWarningLimit: 700,
+    chunkSizeWarningLimit: 500,
+    rolldownOptions: {
+      output: {
+        // Libraries in their own chunks: they rarely change, so an app update leaves their
+        // precache entries alone and the service worker downloads only the app chunks.
+        // `$initial`: only modules of the first load; lazy parts (Modal, dates, dnd-kit)
+        // stay in their lazy chunks instead of being pulled into the first load.
+        codeSplitting: {
+          groups: [
+            {
+              name: 'react',
+              test: /node_modules[\\/](react|react-dom|react-router|scheduler)[\\/]/,
+              tags: ['$initial'],
+              priority: 30,
+            },
+            {
+              name: 'mantine',
+              test: /node_modules[\\/](@mantine|@floating-ui|react-number-format|react-remove-scroll[^\\/]*|react-transition-group|react-style-singleton|use-callback-ref|use-sidecar|tslib|clsx)[\\/]/,
+              tags: ['$initial'],
+              priority: 20,
+            },
+            {
+              name: 'dexie',
+              test: /node_modules[\\/](dexie|dexie-react-hooks)[\\/]/,
+              tags: ['$initial'],
+              priority: 10,
+            },
+          ],
+        },
+      },
+    },
   },
   plugins: [
     react(),

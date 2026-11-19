@@ -1,7 +1,18 @@
-import { Button, Card, Checkbox, FileButton, Group, Stack, Text, Title } from '@mantine/core';
+import {
+  ActionIcon,
+  Button,
+  Card,
+  Checkbox,
+  FileButton,
+  Group,
+  Stack,
+  Text,
+  Title,
+  UnstyledButton,
+} from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { lazy, Suspense, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { createEntry } from '../../db/entries';
 import { deleteForm, listForms, putForms, saveForm } from '../../db/forms';
@@ -11,6 +22,10 @@ import { LIBRARY_ENABLED } from '../../config/features';
 import { useLanguage, useT } from '../../i18n/I18nProvider';
 import type { Form } from '../../schema/form';
 import { PageLoader } from '../../layout/PageLoader';
+import { shareText } from '../../services/share';
+import { MAX_LINK_LENGTH, buildFormLink } from './formLink';
+import type { FormCardAction } from './FormCardMenu';
+import { MoreButton } from './MoreButton';
 import type { ConflictAction } from './ImportConflictModal';
 import { asCopy, dedupeIds, exportForms, planImport } from './importExport';
 import type { ImportError } from './readImportFiles';
@@ -18,6 +33,9 @@ import type { ImportError } from './readImportFiles';
 const DeleteFormModal = lazy(() =>
   import('./DeleteFormModal').then((m) => ({ default: m.DeleteFormModal })),
 );
+// The card menu (Menu, Popover, floating-ui) loads right after the first render, not with it.
+const loadCardMenu = () => import('./FormCardMenu');
+const FormCardMenu = lazy(() => loadCardMenu().then((m) => ({ default: m.FormCardMenu })));
 const ImportConflictModal = lazy(() =>
   import('./ImportConflictModal').then((m) => ({ default: m.ImportConflictModal })),
 );
@@ -46,6 +64,11 @@ export function FormsPage() {
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [toDelete, setToDelete] = useState<Form | null>(null);
   const [conflicts, setConflicts] = useState<Form[]>([]);
+  // Card whose "⋯" was tapped before the menu chunk arrived: it opens once loaded.
+  const [pendingMenu, setPendingMenu] = useState<string | null>(null);
+  useEffect(() => {
+    void loadCardMenu();
+  }, []);
   const tally = useRef<ImportTally>({ ...EMPTY_TALLY });
   // Conflicts still waiting for a decision (a ref: decisions resolve between renders).
   const openConflicts = useRef(0);
@@ -147,6 +170,26 @@ export function FormsPage() {
     }
   };
 
+  const shareLink = async (form: Form) => {
+    const url = await buildFormLink(form, window.location.href);
+    if (url.length > MAX_LINK_LENGTH) {
+      notifications.show({ color: 'red', message: t('forms.shareLink.tooLong') });
+      return;
+    }
+    const result = await shareText(t('forms.shareLink.text', { title: titleOf(form), url }));
+    if (result === 'failed') {
+      notifications.show({ color: 'red', message: t('forms.shareLink.failed') });
+    }
+  };
+
+  const runMenuAction = (action: FormCardAction, form: Form) => {
+    setPendingMenu(null);
+    if (action === 'shareLink') void shareLink(form);
+    else if (action === 'duplicate') void duplicate(form);
+    else if (action === 'exportFile') exportForms([form]);
+    else setToDelete(form);
+  };
+
   const exportSelection = () => exportForms(forms.filter((f) => selected.has(f.id)));
 
   return (
@@ -175,16 +218,24 @@ export function FormsPage() {
         </Stack>
       ) : (
         forms.map((form) => (
-          <Card key={form.id} withBorder className="bogen-list-card">
+          <Card key={form.id} withBorder pb="xs" className="bogen-list-card bogen-card-link">
             <Group align="flex-start" wrap="nowrap">
               <Checkbox
+                className="bogen-card-control"
                 aria-label={t('forms.select', { title: titleOf(form) })}
                 checked={selected.has(form.id)}
                 onChange={(e) => toggle(form.id, e.currentTarget.checked)}
               />
-              <div>
-                <Title order={3} size="h4">
-                  {titleOf(form)}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <Title order={3} size="h4" className="bogen-card-title">
+                  {/* Stretched over the whole card via ::after (theme.css); the controls sit above it. */}
+                  <UnstyledButton
+                    className="bogen-card-action"
+                    aria-label={t('forms.fillNamed', { title: titleOf(form) })}
+                    onClick={() => void fill(form)}
+                  >
+                    {titleOf(form)}
+                  </UnstyledButton>
                 </Title>
                 <Text c="dimmed" size="sm">
                   {t('forms.fieldCount', { count: form.fields.length })}
@@ -195,22 +246,34 @@ export function FormsPage() {
                   })}
                 </Text>
               </div>
+              <Group gap={0} wrap="nowrap" className="bogen-card-control bogen-card-icons">
+                <ActionIcon
+                  variant="subtle"
+                  size="xl"
+                  aria-label={t('forms.editNamed', { title: titleOf(form) })}
+                  onClick={() => void navigate(`/forms/${form.id}/edit`)}
+                >
+                  <span aria-hidden>✎</span>
+                </ActionIcon>
+                <Suspense
+                  fallback={
+                    <MoreButton
+                      label={t('forms.more', { title: titleOf(form) })}
+                      onClick={() => setPendingMenu(form.id)}
+                    />
+                  }
+                >
+                  <FormCardMenu
+                    label={t('forms.more', { title: titleOf(form) })}
+                    defaultOpened={pendingMenu === form.id}
+                    onAction={(action) => runMenuAction(action, form)}
+                  />
+                </Suspense>
+              </Group>
             </Group>
-            <Group mt="sm" gap="xs">
-              <Button onClick={() => void fill(form)}>{t('forms.fill')}</Button>
-              <Button variant="default" onClick={() => void navigate(`/forms/${form.id}/edit`)}>
-                {t('forms.edit')}
-              </Button>
-              <Button variant="default" onClick={() => void duplicate(form)}>
-                {t('forms.duplicate')}
-              </Button>
-              <Button variant="default" onClick={() => exportForms([form])}>
-                {t('forms.export')}
-              </Button>
-              <Button variant="default" color="red" onClick={() => setToDelete(form)}>
-                {t('forms.delete')}
-              </Button>
-            </Group>
+            <Text aria-hidden className="bogen-card-chevron" c="dimmed">
+              ›
+            </Text>
           </Card>
         ))
       )}

@@ -7,6 +7,8 @@ import type { Form } from '../../schema/form';
 import { renderApp } from '../../test/renderApp';
 import { mockViewport } from '../../test/viewport';
 import * as io from './importExport';
+import * as link from './formLink';
+import { parseFormFile } from '../../schema/formFile';
 
 const features = vi.hoisted(() => ({ library: false }));
 vi.mock('../../config/features', () => ({
@@ -35,6 +37,14 @@ const fileInput = () => document.querySelector<HTMLInputElement>('input[type="fi
 
 async function upload(...files: File[]) {
   await userEvent.upload(fileInput(), files);
+}
+
+/** Opens the "⋯" menu of the form card and picks an entry. */
+async function menuAction(title: string, item: string) {
+  await userEvent.click(
+    await screen.findByRole('button', { name: `Weitere Aktionen für „${title}“` }),
+  );
+  await userEvent.click(await screen.findByRole('menuitem', { name: item }));
 }
 
 beforeEach(async () => {
@@ -98,10 +108,26 @@ describe('FormsPage', () => {
     expect(screen.getByText('Zuletzt geändert: 02.01.2026')).toBeInTheDocument();
   });
 
+  it('opens the form for filling when the card is clicked', async () => {
+    await db.forms.put(form('a', 'Mein Bogen'));
+    renderApp('/forms');
+    await userEvent.click(await screen.findByRole('button', { name: '„Mein Bogen“ ausfüllen' }));
+    expect(await screen.findByRole('heading', { name: 'Mein Bogen', level: 2 })).toBeVisible();
+    expect(await db.entries.count()).toBe(1);
+  });
+
+  it('opens the builder from the pencil icon', async () => {
+    await db.forms.put(form('a', 'Mein Bogen'));
+    renderApp('/forms');
+    await userEvent.click(await screen.findByRole('button', { name: '„Mein Bogen“ bearbeiten' }));
+    expect(await screen.findByDisplayValue('Mein Bogen')).toBeInTheDocument();
+    expect(await db.entries.count()).toBe(0);
+  });
+
   it('duplicates a form as a copy', async () => {
     await db.forms.put(form('a', 'Bogen'));
     renderApp('/forms');
-    await userEvent.click(await screen.findByRole('button', { name: 'Duplizieren' }));
+    await menuAction('Bogen', 'Duplizieren');
     expect(await screen.findByText('Bogen (Kopie)')).toBeInTheDocument();
     expect(await db.forms.count()).toBe(2);
   });
@@ -109,13 +135,13 @@ describe('FormsPage', () => {
   it('asks before deleting and keeps the form on cancel', async () => {
     await db.forms.put(form('a', 'Bogen'));
     renderApp('/forms');
-    await userEvent.click(await screen.findByRole('button', { name: 'Löschen' }));
+    await menuAction('Bogen', 'Löschen');
     const dialog = await screen.findByRole('dialog');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Abbrechen' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(await db.forms.count()).toBe(1);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Löschen' }));
+    await menuAction('Bogen', 'Löschen');
     await userEvent.click(
       within(await screen.findByRole('dialog')).getByRole('button', { name: 'Löschen' }),
     );
@@ -127,8 +153,7 @@ describe('FormsPage', () => {
     await db.forms.put(form('b', 'Zwei'));
     const spy = vi.spyOn(io, 'exportForms').mockImplementation(() => {});
     renderApp('/forms');
-    const exportButtons = await screen.findAllByRole('button', { name: 'Exportieren' });
-    await userEvent.click(exportButtons[0]!);
+    await menuAction('Eins', 'Als Datei exportieren');
     expect(spy).toHaveBeenLastCalledWith([expect.objectContaining({ id: 'a' })]);
 
     expect(screen.getByRole('button', { name: 'Auswahl exportieren' })).toBeDisabled();
@@ -285,6 +310,47 @@ describe('FormsPage', () => {
       );
       expect(await screen.findByText('Zwei (Kopie)')).toBeInTheDocument();
       expect(await db.forms.count()).toBe(2);
+    });
+  });
+  describe('share as link', () => {
+    it('shares a text with an import link that carries the form', async () => {
+      const share = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'share', { value: share, configurable: true });
+      try {
+        await db.forms.put(form('a', 'Mein Bogen'));
+        renderApp('/forms');
+        await menuAction('Mein Bogen', 'Als Link teilen');
+        await waitFor(() => expect(share).toHaveBeenCalledOnce());
+        const { text } = share.mock.calls[0]![0] as { text: string };
+        expect(text).toMatch(
+          /^BOGEN-Formularvorlage „Mein Bogen“\. Zum Übernehmen den Link öffnen:\n\S+#\/import\?v=1&d=[\w-]+$/,
+        );
+        const d = text.split('&d=')[1]!;
+        expect(parseFormFile(await link.decodeFormPayload(d)).forms).toEqual([
+          form('a', 'Mein Bogen'),
+        ]);
+      } finally {
+        Reflect.deleteProperty(navigator, 'share');
+      }
+    });
+
+    it('refuses forms too large for a link', async () => {
+      vi.spyOn(link, 'buildFormLink').mockResolvedValue('x'.repeat(link.MAX_LINK_LENGTH + 1));
+      const share = vi.fn();
+      Object.defineProperty(navigator, 'share', { value: share, configurable: true });
+      try {
+        await db.forms.put(form('a', 'Riesig'));
+        renderApp('/forms');
+        await menuAction('Riesig', 'Als Link teilen');
+        expect(
+          await screen.findByText(
+            'Das Formular ist zu groß für einen Link. Bitte stattdessen „Als Datei exportieren“ verwenden.',
+          ),
+        ).toBeInTheDocument();
+        expect(share).not.toHaveBeenCalled();
+      } finally {
+        Reflect.deleteProperty(navigator, 'share');
+      }
     });
   });
 });

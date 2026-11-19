@@ -40,6 +40,14 @@ export const routes: RouteObject[] = [
             handle: { titleKey: 'nav.library' },
           }
         : { path: '/library', element: <Navigate to="/forms" replace /> },
+      // Target of shared template links (formLink.ts); lazy: parsing pulls in Zod.
+      {
+        path: '/import',
+        lazy: async () => ({
+          Component: (await import('./features/forms/ImportLinkPage')).ImportLinkPage,
+        }),
+        handle: { titleKey: 'page.import' },
+      },
       { path: '/entries', element: <EntriesPage />, handle: { titleKey: 'nav.entries' } },
       { path: '/entries/:entryId', element: <FillPage />, handle: { titleKey: 'page.fill' } },
       { path: '/settings', element: <SettingsPage />, handle: { titleKey: 'nav.settings' } },

@@ -34,6 +34,7 @@ export const de = {
   'nav.about': 'Über',
   'page.builder': 'Formular-Generator',
   'page.fill': 'Eintrag',
+  'page.import': 'Vorlage übernehmen',
   'settings.language': 'Sprache',
   'settings.language.auto': 'Automatisch (Browser)',
   'settings.language.de': 'Deutsch',
@@ -95,7 +96,10 @@ export const de = {
   'forms.edit': 'Bearbeiten',
   'forms.duplicate': 'Duplizieren',
   'forms.delete': 'Löschen',
-  'forms.export': 'Exportieren',
+  'forms.exportFile': 'Als Datei exportieren',
+  'forms.fillNamed': '„{title}“ ausfüllen',
+  'forms.editNamed': '„{title}“ bearbeiten',
+  'forms.more': 'Weitere Aktionen für „{title}“',
   'forms.cancel': 'Abbrechen',
   'forms.copyTitle': '{title} (Kopie)',
   'forms.delete.title': 'Formular löschen?',
@@ -120,6 +124,22 @@ export const de = {
   'forms.import.error.invalidForm':
     'Datei „{file}“: Formular {position}{title} ist ungültig{path} und wurde nicht importiert.',
   'forms.import.errorTitlePart': ' „{title}“',
+  'forms.shareLink': 'Als Link teilen',
+  'forms.shareLink.text': 'BOGEN-Formularvorlage „{title}“. Zum Übernehmen den Link öffnen:\n{url}',
+  'forms.shareLink.tooLong':
+    'Das Formular ist zu groß für einen Link. Bitte stattdessen „Als Datei exportieren“ verwenden.',
+  'forms.shareLink.failed':
+    'Teilen fehlgeschlagen. Bitte Pop-ups erlauben oder stattdessen „Als Datei exportieren“ verwenden.',
+  'importLink.intro': 'Diese Formularvorlage wurde mit dir geteilt:',
+  'importLink.accept': 'Übernehmen',
+  'importLink.exists':
+    '„{title}“ ist schon vorhanden. Was soll mit der geteilten Version passieren?',
+  'importLink.done': 'Vorlage „{title}“ übernommen.',
+  'importLink.invalid':
+    'Der Link ist beschädigt oder unvollständig. Bitte den Absender, ihn noch einmal zu schicken.',
+  'importLink.unsupported':
+    'Die Vorlage stammt aus einer neueren Version von BOGEN. Bitte die App aktualisieren.',
+  'importLink.toForms': 'Zu meinen Formularen',
   'library.export': 'Exportieren',
   'builder.formTitle': 'Titel',
   'builder.formDescription': 'Beschreibung',

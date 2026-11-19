@@ -58,6 +58,63 @@ body {
 .bogen-list-card {
   border-left: 4px solid light-dark(#0f6e8f, #2e96ba);
 }
+/* Card whose main action (.bogen-card-action) covers the whole card ("stretched link").
+   Further controls (.bogen-card-control) sit above the overlay and stay separately usable. */
+.bogen-card-link {
+  position: relative;
+  transition: background-color 120ms ease;
+}
+.bogen-card-link:has(.bogen-card-action:hover),
+.bogen-card-link:has(.bogen-card-action:active) {
+  background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-5));
+}
+.bogen-card-link:has(.bogen-card-action:focus-visible) {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
+}
+.bogen-card-action {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.bogen-card-action:focus-visible {
+  outline: none;
+}
+.bogen-card-action::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.bogen-card-control {
+  position: relative;
+  z-index: 1;
+}
+/* Title line as tall as the checkbox (20px), so both share one top edge without extra space. */
+.bogen-card-title {
+  line-height: 1.15;
+  /* Lowercase glyphs sit low in the line box: lift the text to look centred on the checkbox. */
+  margin-top: -2px;
+}
+/* 44px touch targets, pulled up so the icons centre on the title line. */
+.bogen-card-icons {
+  margin-top: -12px;
+  margin-right: -16px;
+}
+/* Same height and bottom edge as the last text line (card padding-bottom is xs). */
+.bogen-card-chevron {
+  position: absolute;
+  right: var(--mantine-spacing-md);
+  bottom: var(--mantine-spacing-xs);
+  height: calc(var(--mantine-font-size-sm) * var(--mantine-line-height-sm));
+  display: flex;
+  align-items: center;
+  font-size: 1.5rem;
+  /* The glyph sits low in its box: lift it onto the x-height of the last text line. */
+  transform: translateY(-3px);
+  pointer-events: none;
+}
 /* Label/date pairs on a list card: dates start in one column. */
 .bogen-stamps {
   display: grid;

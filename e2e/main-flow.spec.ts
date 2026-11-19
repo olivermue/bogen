@@ -125,12 +125,14 @@ test('main flow: build, reorder, fill, copy, export/import, language', async ({ 
   // 5. Export, delete (confirm), import the downloaded file: form is back.
   await goTo(page, 'Meine Formulare');
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Exportieren', exact: true }).click();
+  await page.getByRole('button', { name: 'Weitere Aktionen für „Test“' }).click();
+  await page.getByRole('menuitem', { name: 'Als Datei exportieren' }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('test.json');
   const file = await download.path();
 
-  await page.getByRole('button', { name: 'Löschen', exact: true }).click();
+  await page.getByRole('button', { name: 'Weitere Aktionen für „Test“' }).click();
+  await page.getByRole('menuitem', { name: 'Löschen' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Löschen', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Test' })).toHaveCount(0);
   await expect(page.getByText('Noch keine eigenen Formulare.')).toBeVisible();
